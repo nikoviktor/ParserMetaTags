@@ -110,6 +110,7 @@ class ParserMetaTags:
 
                 if soup.findAll("title"):
                     title = soup.find("title").string
+                    if title is not None: title = title.strip()
                     exel_list.append(title)
                 else:
                     title = " "
@@ -117,6 +118,7 @@ class ParserMetaTags:
 
                 if soup.findAll("h1"):
                     h1 = soup.find("h1").string
+                    if h1 is not None: h1 = h1.strip()
                     exel_list.append(h1)
                 else:
                     h1 = " "
@@ -124,6 +126,7 @@ class ParserMetaTags:
 
                 if soup.findAll("meta", attrs={"name": "description"}):
                     description = soup.find("meta", attrs={"name": "description"}).get("content")
+                    if description is not None: description = description.strip()
                     exel_list.append(description)
                 else:
                     description = " "
