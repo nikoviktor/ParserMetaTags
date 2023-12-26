@@ -1,39 +1,145 @@
+# -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import scrolledtext
-import requests
+from tkinter import messagebox
+from tkinter import ttk
 from bs4 import BeautifulSoup
+import requests
+import os
+from openpyxl import Workbook
 
-def parse_websites():
-    urls = text_area.get("1.0", tk.END).splitlines()
+exel_list = []
+# Получить путь к рабочему столу
+current_directory = os.path.join(os.path.expanduser('~'), 'Desktop')
 
-    for url in urls:
+class ParserMetaTags:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("ParserMetaTags")
+        self.root.geometry("800x600")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Список урлов
+        self.url_label = tk.Label(self.root, text="Список урлов (для вставки переключите клавиатуру на язык EN)")
+        self.url_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
+
+        self.url_textarea = scrolledtext.ScrolledText(self.root, width=60, height=5)
+        self.url_textarea.grid(row=1, column=0, padx=10, pady=5, columnspan=2, sticky="nsew")
+
+        # Кнопка СТАРТ
+        self.start_button = tk.Button(self.root, text="СТАРТ", command=self.parse_url)
+        self.start_button.grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
+
+        # Результат
+        self.result_label = tk.Label(self.root, text="Результат")
+        self.result_label.grid(row=3, column=0, padx=10, pady=10, sticky=tk.W)
+
+        self.result_textarea = scrolledtext.ScrolledText(self.root, width=60, height=10)
+        self.result_textarea.grid(row=4, column=0, padx=10, pady=5, columnspan=2, sticky="nsew")
+
+        # Прогресс бар
+        self.progress_bar = ttk.Progressbar(self.root, orient='horizontal', length=200, mode='determinate')
+        self.progress_bar.grid(row=5, column=0, padx=10, pady=10, columnspan=2, sticky="nsew")
+
+        # Размещение элементов по центру
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_rowconfigure(4, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        # Обработчики клавиш
+        #self.url_textarea.bind("<Control-v>", self.paste_text)
+        #self.result_textarea.bind("<Control-v>", self.paste_text)
+
+    def paste_text(self, event):
+        text = self.root.clipboard_get()
+        current_textarea = self.root.focus_get()
+
+        if isinstance(current_textarea, tk.Text):
+            current_textarea.insert(tk.INSERT, text)
+
+    def parse_url(self):
+        data = []
+        urls = self.url_textarea.get("1.0", tk.END).splitlines()
+
+        self.progress_bar['value'] = 0
+
         try:
-            response = requests.get(url)
-            soup = BeautifulSoup(response.text, 'html.parser')
+            for i, url in enumerate(urls, 1):
+                progress_value = (i / len(urls)) * 100
+                self.progress_bar['value'] = progress_value
+                self.root.update_idletasks()
 
-            title = soup.title.string if soup.title else 'N/A'
-            description = soup.find('meta', {'name': 'description'})['content'] if soup.find('meta', {'name': 'description'}) else 'N/A'
-            h1 = soup.find('h1').text if soup.find('h1') else 'N/A'
-
-            result_text.insert(tk.END, f"URL: {url}\nTitle: {title}\nDescription: {description}\nH1: {h1}\n\n")
+                data.append(self.get_title_from_url(url))
         except Exception as e:
-            result_text.insert(tk.END, f"Error parsing {url}: {str(e)}\n\n")
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")
+        finally:
+            self.progress_bar['value'] = 0
+            self.export_to_excel(data, "output_metadata.xlsx")
 
-# Создаем графический интерфейс
-root = tk.Tk()
-root.title("Web Page Parser")
 
-# Создаем текстовое поле для ввода урлов
-text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=10)
-text_area.pack(pady=10)
+    def export_to_excel(self, data, filename):
+        # Сохранить файл
+        excel_filepath = os.path.join(current_directory, filename)
 
-# Создаем кнопку СТАРТ
-start_button = tk.Button(root, text="START", command=parse_websites)
-start_button.pack()
+        # Создаем новую книгу Excel
+        workbook = Workbook()
+        sheet = workbook.active
 
-# Создаем текстовое поле для вывода результата
-result_text = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=60, height=20)
-result_text.pack(pady=10)
+       # Заполняем лист данными из многомерного массива (если урлов много)
+        for row_index, row in enumerate(data, start=1):
+            for col_index, value in enumerate(row, start=1):
+                sheet.cell(row=row_index, column=col_index, value=value)
 
-# Запускаем главный цикл программы
-root.mainloop()
+        # Сохраняем книгу Excel
+        workbook.save(excel_filepath)
+        self.result_textarea.insert(tk.END, f"\n\nДанные успешно экспортированы в файл: {excel_filepath}")
+
+
+    def get_title_from_url(self, url):
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+            response = requests.get(url, headers=headers)
+            if(response.status_code == 200):
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                exel_list = []
+                exel_list.append(url)
+
+                if soup.findAll("title"):
+                    title = soup.find("title").string
+                    exel_list.append(title)
+                else:
+                    title = " "
+                    exel_list.append(title)
+
+                if soup.findAll("h1"):
+                    h1 = soup.find("h1").string
+                    exel_list.append(h1)
+                else:
+                    h1 = " "
+                    exel_list.append(h1)
+
+                if soup.findAll("meta", attrs={"name": "description"}):
+                    description = soup.find("meta", attrs={"name": "description"}).get("content")
+                    exel_list.append(description)
+                else:
+                    description = " "
+                    exel_list.append(description)
+
+        except ConnectionRefusedError:
+            print("Ошибка: Сервер отклонил соединение.")
+
+        except Exception as e:
+            print(f"Произошла ошибка: {e}")
+
+        self.result_textarea.insert(tk.END, f"{exel_list}\n")
+        return exel_list
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ParserMetaTags(root)
+    root.mainloop()
