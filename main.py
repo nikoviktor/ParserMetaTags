@@ -15,7 +15,7 @@ current_directory = os.path.join(os.path.expanduser('~'), 'Desktop')
 class ParserMetaTags:
     def __init__(self, root):
         self.root = root
-        self.root.title("ParserMetaTags")
+        self.root.title("Парсер мета-тегов © Emall - Edostavka")
         self.root.geometry("800x600")
 
         self.create_widgets()
@@ -72,6 +72,8 @@ class ParserMetaTags:
                 self.progress_bar['value'] = progress_value
                 self.root.update_idletasks()
 
+                global exel_list
+                exel_list = []
                 data.append(self.get_title_from_url(url))
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
@@ -101,35 +103,38 @@ class ParserMetaTags:
     def get_title_from_url(self, url):
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+            #headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
             response = requests.get(url, headers=headers)
             if(response.status_code == 200):
                 soup = BeautifulSoup(response.text, 'html.parser')
 
-                exel_list = []
                 exel_list.append(url)
 
                 if soup.findAll("title"):
                     title = soup.find("title").string
                     if title is not None: title = title.strip()
+                    else: title = ' '
                     exel_list.append(title)
                 else:
-                    title = " "
+                    title = ' '
                     exel_list.append(title)
 
                 if soup.findAll("h1"):
                     h1 = soup.find("h1").string
                     if h1 is not None: h1 = h1.strip()
+                    else: h1 = ' '
                     exel_list.append(h1)
                 else:
-                    h1 = " "
+                    h1 = ' '
                     exel_list.append(h1)
 
                 if soup.findAll("meta", attrs={"name": "description"}):
                     description = soup.find("meta", attrs={"name": "description"}).get("content")
                     if description is not None: description = description.strip()
+                    else: description = ' '
                     exel_list.append(description)
                 else:
-                    description = " "
+                    description = ' '
                     exel_list.append(description)
 
         except ConnectionRefusedError:
