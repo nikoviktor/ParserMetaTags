@@ -116,6 +116,12 @@ class ParserMetaTags:
         workbook.save(excel_filepath)
         self.result_textarea.insert(tk.END, f"\n\nДанные успешно экспортированы в файл: {excel_filepath}")
 
+        # Открываем экспортированный файл
+        os.startfile(excel_filepath)
+
+        # Закрываем окно программы
+        self.root.destroy()
+
 
     def get_title_from_url(self, url):
         try:
