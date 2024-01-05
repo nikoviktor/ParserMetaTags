@@ -15,14 +15,14 @@ current_directory = os.path.join(os.path.expanduser('~'), 'Desktop')
 class ParserMetaTags:
     def __init__(self, root):
         self.root = root
-        self.root.title("Парсер мета-тегов © Emall - Edostavka")
+        self.root.title("Парсер мета-тегов © Виктор Торгаш")
         self.root.geometry("800x600")
 
         self.create_widgets()
 
     def create_widgets(self):
         # Список урлов
-        self.url_label = tk.Label(self.root, text="Список урлов (для вставки переключите клавиатуру на язык EN)")
+        self.url_label = tk.Label(self.root, text="Список урлов (чтобы вставить, переключите клавиатуру на EN)")
         self.url_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
 
         self.url_textarea = scrolledtext.ScrolledText(self.root, width=60, height=5)
@@ -104,7 +104,7 @@ class ParserMetaTags:
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
             #headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=5)
             if(response.status_code == 200):
                 soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -137,6 +137,8 @@ class ParserMetaTags:
                     description = " "
                     exel_list.append(description)
 
+        except requests.Timeout:
+            print(f"Таймаут при запросе URL: {url}")
         except ConnectionRefusedError:
             print("Ошибка: Сервер отклонил соединение.")
 
