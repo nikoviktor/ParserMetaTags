@@ -28,9 +28,21 @@ class ParserMetaTags:
         self.url_textarea = scrolledtext.ScrolledText(self.root, width=60, height=5)
         self.url_textarea.grid(row=1, column=0, padx=10, pady=5, columnspan=2, sticky="nsew")
 
+        # Создаем контейнер для кнопок
+        button_container = tk.Frame(self.root)
+        button_container.grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
+
+        # Кнопка ВСТАВИТЬ
+        self.paste_button = tk.Button(button_container, text="ВСТАВИТЬ", command=self.paste_text)
+        self.paste_button.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+
+        # Кнопка ОЧИСТИТЬ
+        self.clear_button = tk.Button(button_container, text="ОЧИСТИТЬ", command=self.clear_text)
+        self.clear_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+
         # Кнопка СТАРТ
-        self.start_button = tk.Button(self.root, text="СТАРТ", command=self.parse_url)
-        self.start_button.grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
+        self.start_button = tk.Button(button_container, text="СТАРТ", command=self.parse_url)
+        self.start_button.grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
 
         # Результат
         self.result_label = tk.Label(self.root, text="Результат")
@@ -50,17 +62,22 @@ class ParserMetaTags:
         self.root.grid_columnconfigure(1, weight=1)
 
         # Обработчики клавиш
-        #self.url_textarea.bind("<Control-v>", self.paste_text)
-        #self.result_textarea.bind("<Control-v>", self.paste_text)
+        self.url_textarea.bind("<Control-v>", self.paste_text)
+        self.result_textarea.bind("<Control-v>", self.paste_text)
 
-    def paste_text(self, event):
+    def paste_text(self, event=None):
         text = self.root.clipboard_get()
-        current_textarea = self.root.focus_get()
+        self.url_textarea.delete("1.0", tk.END)  # Очистим первое поле перед вставкой
+        self.url_textarea.insert(tk.END, text)
 
-        if isinstance(current_textarea, tk.Text):
-            current_textarea.insert(tk.INSERT, text)
+
+    def clear_text(self):
+        self.url_textarea.delete("1.0", tk.END)
 
     def parse_url(self):
+        # Очистка поле 2 перед парсингом
+        self.result_textarea.delete("1.0", tk.END)
+
         data = []
         urls = self.url_textarea.get("1.0", tk.END).splitlines()
 
