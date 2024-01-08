@@ -69,6 +69,7 @@ class ParserMetaTags:
         text = self.root.clipboard_get()
         self.url_textarea.delete("1.0", tk.END)  # Очистим первое поле перед вставкой
         self.url_textarea.insert(tk.END, text)
+        self.parse_url()
 
 
     def clear_text(self):
@@ -125,6 +126,7 @@ class ParserMetaTags:
 
     def get_title_from_url(self, url):
         try:
+            exel_list = []
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
             #headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
             response = requests.get(url, headers=headers, timeout=5)
